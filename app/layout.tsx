@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,12 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Tomer's Software Portal",
-    template: "%s · Tomer's Software Portal",
+    template: "%s \u00b7 Tomer's Software Portal",
   },
   description: "One place for the software I ship.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"
@@ -31,8 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <a href="#main" className="skip-link">
           Skip to main content
         </a>
-        <SiteHeader />
-        <div className="flex-1">{children}</div>
+        {children}
       </body>
     </html>
   );
