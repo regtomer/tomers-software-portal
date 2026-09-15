@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Tomer's Software Portal",
-    template: "%s \u00b7 Tomer's Software Portal",
+    template: "%s · Tomer's Software Portal",
   },
   description: "One place for the software I ship.",
 };
