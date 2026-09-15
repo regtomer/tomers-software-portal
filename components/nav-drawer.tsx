@@ -10,6 +10,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { apps, type AppEntry } from "@/lib/apps";
 import { signOut } from "@/app/actions/auth";
 
@@ -62,6 +63,7 @@ function NavLink({
 
 export function NavDrawer() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
   const titleId = useId();
@@ -69,6 +71,10 @@ export function NavDrawer() {
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -107,7 +113,6 @@ export function NavDrawer() {
           (el) => !el.hasAttribute("disabled") && el.tabIndex !== -1,
         );
 
-      // Defer so `hidden` is cleared before focusing
       requestAnimationFrame(() => {
         focusables()[0]?.focus();
       });
@@ -161,6 +166,91 @@ export function NavDrawer() {
     }
   };
 
+  const drawer =
+    open && mounted
+      ? createPortal(
+          <>
+            <div
+              className="drawer-overlay fixed inset-0 z-40 bg-black/50 opacity-100 transition-opacity duration-200 motion-reduce:transition-none"
+              aria-hidden="true"
+              onClick={close}
+            />
+
+            <div
+              ref={panelRef}
+              id={drawerId}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+              className="drawer-panel fixed inset-y-0 left-0 z-50 flex w-[min(280px,85vw)] flex-col border-r border-border bg-surface shadow-xl translate-x-0 transition-transform duration-200 ease-out motion-reduce:transition-none"
+            >
+              <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-3">
+                <p id={titleId} className="text-sm font-medium text-foreground">
+                  Menu
+                </p>
+                <button
+                  type="button"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  aria-label="Close menu"
+                  onClick={close}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M5 5l10 10M15 5L5 15"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <nav
+                className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3"
+                aria-label="Apps"
+              >
+                <ul className="space-y-1">
+                  {apps.map((entry) => {
+                    const current =
+                      entry.kind === "route" &&
+                      (entry.href === "/"
+                        ? pathname === "/"
+                        : pathname.startsWith(entry.href));
+                    return (
+                      <li key={entry.id}>
+                        <NavLink
+                          entry={entry}
+                          current={current}
+                          onNavigate={close}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="mt-auto border-t border-border pt-3">
+                  <form action={signOut}>
+                    <button
+                      type="submit"
+                      className="block w-full rounded-sm px-3 py-2 text-left text-sm text-foreground/90 transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                      onClick={close}
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              </nav>
+            </div>
+          </>,
+          document.body,
+        )
+      : null;
+
   return (
     <>
       <button
@@ -206,88 +296,7 @@ export function NavDrawer() {
         )}
       </button>
 
-      <div
-        className={[
-          "drawer-overlay fixed inset-0 z-40 bg-black/50",
-          open ? "opacity-100" : "pointer-events-none opacity-0",
-          "transition-opacity duration-200 motion-reduce:transition-none",
-        ].join(" ")}
-        aria-hidden="true"
-        onClick={close}
-      />
-
-      <div
-        ref={panelRef}
-        id={drawerId}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className={[
-          "drawer-panel fixed inset-y-0 left-0 z-50 flex w-[min(280px,85vw)] flex-col border-r border-border bg-surface shadow-xl",
-          open ? "translate-x-0" : "-translate-x-full pointer-events-none",
-          "transition-transform duration-200 ease-out motion-reduce:transition-none",
-        ].join(" ")}
-        hidden={!open}
-      >
-        <div className="flex h-14 items-center justify-between border-b border-border px-3">
-          <p id={titleId} className="text-sm font-medium text-foreground">
-            Menu
-          </p>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            aria-label="Close menu"
-            onClick={close}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 20 20"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M5 5l10 10M15 5L5 15"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <nav className="flex flex-1 flex-col overflow-y-auto p-3" aria-label="Apps">
-          <ul className="space-y-1">
-            {apps.map((entry) => {
-              const current =
-                entry.kind === "route" &&
-                (entry.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(entry.href));
-              return (
-                <li key={entry.id}>
-                  <NavLink
-                    entry={entry}
-                    current={current}
-                    onNavigate={close}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-auto border-t border-border pt-3">
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="block w-full rounded-sm px-3 py-2 text-left text-sm text-foreground/90 transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                onClick={close}
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
-        </nav>
-      </div>
+      {drawer}
     </>
   );
 }
