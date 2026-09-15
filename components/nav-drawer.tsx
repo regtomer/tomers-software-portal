@@ -11,6 +11,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { apps, type AppEntry } from "@/lib/apps";
+import { signOut } from "@/app/actions/auth";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -255,7 +256,7 @@ export function NavDrawer() {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3" aria-label="Apps">
+        <nav className="flex flex-1 flex-col overflow-y-auto p-3" aria-label="Apps">
           <ul className="space-y-1">
             {apps.map((entry) => {
               const current =
@@ -274,6 +275,17 @@ export function NavDrawer() {
               );
             })}
           </ul>
+          <div className="mt-auto border-t border-border pt-3">
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="block w-full rounded-sm px-3 py-2 text-left text-sm text-foreground/90 transition-colors hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                onClick={close}
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </nav>
       </div>
     </>
